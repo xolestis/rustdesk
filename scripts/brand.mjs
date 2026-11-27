@@ -35,6 +35,12 @@ changes.set('public/sindora-logo.svg',logo);
 const loginPath='src/pages/user/login/index.tsx';
 const login=changes.get(loginPath);
 if (!login.includes('src="/logo.svg"')) throw Error('Login logo anchor missing');
-changes.set(loginPath,login.replace('src="/logo.svg"','src="/sindora-logo.svg" style={{ width: 160, height: "auto", objectFit: "contain" }}'));
+changes.set(loginPath,login.replace('logo={<img alt="logo" src="/logo.svg" />}', 'logo={false}').replace('title="Console Sindora"', 'title={<img alt="Console Sindora" src="/sindora-logo.svg" style={{ width: 200, maxWidth: "100%", height: "auto", display: "inline-block" }} />}'));
+const configPath = 'config/config.ts';
+changes.set(configPath, changes.get(configPath).replace('fontFamily:', 'colorPrimary: '+JSON.stringify(color)+',\n          fontFamily:').replaceAll('#1890ff', color).replaceAll("content: 'RustDesk Console'", "content: 'Console Sindora'"));
+replace('src/pages/user/login/styles.ts', [[
+  "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
+  "linear-gradient(135deg, #ffffff 0%, #edf3e5 55%, #ffffff 100%)"
+]]);
 for (const [p,v] of changes) fs.writeFileSync(path.join(root,p),v);
 console.log('Modified:', [...changes.keys()].join(', '));
