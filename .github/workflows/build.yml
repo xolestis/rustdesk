@@ -1,0 +1,56 @@
+name: Build Sindora console
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'branding/**'
+      - 'scripts/**'
+      - '.github/workflows/build.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Retrieve pinned upstream
+        run: |
+          git clone https://github.com/databk/rustdesk-console-web.git upstream-web
+          git -C upstream-web checkout --detach 9bca1f31f6430d78def615536eae58fa6ecb7e36
+      - name: Apply and verify branding
+        run: |
+          node --check scripts/brand.mjs
+          node scripts/brand.mjs upstream-web
+          git -C upstream-web diff --check
+          grep -F 'Console Sindora' upstream-web/config/config.ts
+          cmp branding/icon.svg upstream-web/public/logo.svg
+          cmp branding/logo.svg upstream-web/public/sindora-logo.svg
+      - name: Build frontend
+        working-directory: upstream-web
+        env:
+          WEB_CLIENT_SOURCE_URL: https://github.com/xolestis/rustdesk
+        run: |
+          npm ci
+          npm run build
+      - name: Build and smoke test Docker
+        working-directory: upstream-web
+        run: |
+          docker build -t sindora-console-web:ci .
+          docker run -d --name sindora-test -p 127.0.0.1:18080:80 -e BACKEND_URL=http://127.0.0.1:3000 sindora-console-web:ci
+          curl --retry 10 --retry-connrefused --fail http://127.0.0.1:18080/ -o /tmp/index.html
+          curl --fail http://127.0.0.1:18080/logo.svg -o /tmp/icon.svg
+          cmp public/logo.svg /tmp/icon.svg
+          docker save sindora-console-web:ci | gzip > ../sindora-console-web.tar.gz
+      - name: Archive corresponding source
+        run: |
+          tar --exclude=.git --exclude=node_modules --exclude=dist -czf sindora-source.tar.gz upstream-web branding scripts README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sindora-console
+          path: |
+            sindora-console-web.tar.gz
+            sindora-source.tar.gz
+          if-no-files-found: error
