@@ -42,5 +42,14 @@ replace('src/pages/user/login/styles.ts', [[
   "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
   "linear-gradient(135deg, #ffffff 0%, #edf3e5 55%, #ffffff 100%)"
 ]]);
+replace('src/components/Footer/index.tsx', [
+  ['copyright="2026 Data Block"', 'copyright="Sindora — Console d’administration | 2026 Data Block — AGPL-3.0"'],
+  ['title: <GithubOutlined />', 'title: <><GithubOutlined /> Sources originales</>'],
+]);
+replace('src/pages/dashboard/DashboardContent.tsx', [
+  ["#1890ff", color], ["#91d5ff", "#dce8ce"],
+  ["#722ed1", "#718a58"], ["#efdbff", "#e1e9d8"],
+  ["#13c2c2", "#607a70"], ["#cff6f6", "#dce9e4"],
+]);
 for (const [p,v] of changes) fs.writeFileSync(path.join(root,p),v);
 console.log('Modified:', [...changes.keys()].join(', '));
